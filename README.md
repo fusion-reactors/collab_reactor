@@ -1,3 +1,5 @@
 # collab_reactor
 
-New reactor class combining Keir and Mate components.
+The package contains two components from paramak
+
+Colaboration project for Keir and Mate. 
