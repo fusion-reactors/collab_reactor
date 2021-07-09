@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 import paramak
 from reactor_components.tf_coil_round_corners import ToroidalFieldCoilRectangleRoundCorners
-
+from reactor_components.Vacuum_vessels import RoundedVacuumVesselInnerLeg
 
 class NewBallReactor(paramak.Reactor):
     """Creates geometry for a simple ball reactor including a plasma,
@@ -22,6 +22,7 @@ class NewBallReactor(paramak.Reactor):
         divertor_radial_thickness: the radial thickness of the divertor
             (cm), this fills the gap between the center column shield and
             blanket
+        vacuum_vessel_thickness: the thickness of the vacuum vessel (cm)
         inner_plasma_gap_radial_thickness: the radial thickness of the
             inboard gap between the plasma and the center column shield (cm)
         plasma_radial_thickness: the radial thickness of the plasma
@@ -69,6 +70,7 @@ class NewBallReactor(paramak.Reactor):
             inner_bore_radial_thickness: float,
             inboard_tf_leg_radial_thickness: float,
             center_column_shield_radial_thickness: float,
+            vacuum_vessel_thickness:float,
             divertor_radial_thickness: float,
             inner_plasma_gap_radial_thickness: float,
             plasma_radial_thickness: float,
@@ -101,6 +103,7 @@ class NewBallReactor(paramak.Reactor):
         self.inboard_tf_leg_radial_thickness = inboard_tf_leg_radial_thickness
         self.center_column_shield_radial_thickness = \
             center_column_shield_radial_thickness
+        self.vacuum_vessel_thickness = vacuum_vessel_thickness
         self.divertor_radial_thickness = divertor_radial_thickness
         self.inner_plasma_gap_radial_thickness = \
             inner_plasma_gap_radial_thickness
@@ -244,7 +247,9 @@ class NewBallReactor(paramak.Reactor):
         uncut_shapes += self._make_blankets_layers()
         uncut_shapes.append(self._make_divertor())
         uncut_shapes += self._make_tf_coils()
+        uncut_shapes.append(self._make_vacuum_vessel())
         pf_coils = self._make_pf_coils()
+        
 
         if pf_coils is None:
             shapes_and_components = uncut_shapes
@@ -283,9 +288,10 @@ class NewBallReactor(paramak.Reactor):
         self._inboard_tf_coils_end_radius = (
             self._inboard_tf_coils_start_radius +
             self.inboard_tf_leg_radial_thickness)
-
+        self._vacuum_vessel_start_radius = self._inboard_tf_coils_end_radius
+        self._vacuum_vessel_inner_radius = self._vacuum_vessel_start_radius + self.vacuum_vessel_thickness
         self._center_column_shield_start_radius = \
-            self._inboard_tf_coils_end_radius
+            self._vacuum_vessel_inner_radius
         self._center_column_shield_end_radius = (
             self._center_column_shield_start_radius
             + self.center_column_shield_radial_thickness
@@ -313,6 +319,7 @@ class NewBallReactor(paramak.Reactor):
         self._blanket_rear_wall_end_radius = (
             self._blanket_rear_wall_start_radius +
             self.blanket_rear_wall_radial_thickness)
+        self._vacuum_vessel_end_radius = self._blanket_rear_wall_end_radius
 
     def _make_vertical_build(self):
 
@@ -333,13 +340,15 @@ class NewBallReactor(paramak.Reactor):
             self.blanket_rear_wall_radial_thickness
 
         self._tf_coil_start_height = self._blanket_rear_wall_end_height + \
-            self.divertor_to_tf_gap_vertical_thickness
+            self.divertor_to_tf_gap_vertical_thickness + self.vacuum_vessel_thickness
 
         self._center_column_shield_height = self._blanket_rear_wall_end_height * 2
+        self._vacuum_vessel_height = self._center_column_shield_height + self.vacuum_vessel_thickness
 
         if self.rear_blanket_to_tf_gap is not None:
             self._tf_coil_start_radius = self._blanket_rear_wall_end_radius + \
-                self.rear_blanket_to_tf_gap
+                self.rear_blanket_to_tf_gap + \
+                self.vacuum_vessel_thickness
             self._tf_coil_end_radius = (
                 self._tf_coil_start_radius +
                 self.outboard_tf_coil_radial_thickness)
@@ -433,6 +442,25 @@ class NewBallReactor(paramak.Reactor):
         )
 
         return [self._firstwall, self._blanket, self._blanket_rear_wall]
+    
+    def _make_vacuum_vessel(self):
+        
+        self._vacuum_vessel = RoundedVacuumVesselInnerLeg(
+            radius = (self._vacuum_vessel_end_radius - self._vacuum_vessel_start_radius)/ 2,
+            thickness = self.vacuum_vessel_thickness,
+            height = self._vacuum_vessel_height,
+            inner_leg_thickness = self.vacuum_vessel_thickness,
+            outer_start_point = (self._vacuum_vessel_start_radius,self._vacuum_vessel_height/2),
+            rotation_angle= self._rotation_angle,
+            stp_filename="vacuum_vessel.stp",
+            name="vacuum_vessel",
+            material_tag="vacuum_vessel_mat",
+            stl_filename="vacuum_vessel.stl",
+            color = (1,1,1)
+            
+            
+        )
+        return self._vacuum_vessel
 
     def _make_divertor(self):
         # # used as an intersect when making the divertor
