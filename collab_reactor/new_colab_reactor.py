@@ -3,7 +3,7 @@ import warnings
 from typing import List, Optional, Union
 
 import paramak
-import paramak_tfcoil_rectroundcorner as ptfc
+from reactor_components.tf_coil_round_corners import ToroidalFieldCoilRectangleRoundCorners
 
 
 class NewBallReactor(paramak.Reactor):
@@ -534,7 +534,7 @@ class NewBallReactor(paramak.Reactor):
                 self.outboard_tf_coil_poloidal_thickness,
                 self.number_of_tf_coils] and self.number_of_tf_coils > 1:
 
-            self._tf_coil = ptfc.ToroidalFieldCoilRectangleRoundCorners(
+            self._tf_coil = ToroidalFieldCoilRectangleRoundCorners(
                 with_inner_leg=False,
                 lower_inner_coordinates=(self._inboard_tf_coils_start_radius, -self._tf_coil_start_height),
                 mid_point_coordinates=(self._tf_coil_start_radius, 0),
