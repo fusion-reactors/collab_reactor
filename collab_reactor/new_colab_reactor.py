@@ -448,9 +448,9 @@ class NewBallReactor(paramak.Reactor):
         self._vacuum_vessel = RoundedVacuumVesselInnerLeg(
             radius = (self._vacuum_vessel_end_radius - self._vacuum_vessel_start_radius)/ 2,
             thickness = self.vacuum_vessel_thickness,
-            height = self._vacuum_vessel_height,
+            height = self._vacuum_vessel_height+self.vacuum_vessel_thickness,
             inner_leg_thickness = self.vacuum_vessel_thickness,
-            outer_start_point = (self._vacuum_vessel_start_radius,self._vacuum_vessel_height/2),
+            outer_start_point = (self._vacuum_vessel_start_radius,(self._vacuum_vessel_height+self.vacuum_vessel_thickness)/2),
             rotation_angle= self._rotation_angle,
             stp_filename="vacuum_vessel.stp",
             name="vacuum_vessel",
@@ -577,3 +577,4 @@ class NewBallReactor(paramak.Reactor):
             )
             comp = [self._tf_coil]
         return comp
+    
