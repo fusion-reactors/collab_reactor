@@ -42,6 +42,8 @@ class NewBallReactor(paramak.Reactor):
             gap between the divertor and the TF coils.
         number_of_tf_coils: the number of tf coils
         number_of_ports: the number of ports in the vacuum vessel
+        port_height: the height of the port
+        port_width: the width of the port
         pf_coil_radial_thicknesses: the radial
             thickness of each poloidal field coil.
         pf_coil_vertical_thicknesses: the vertical
