@@ -81,6 +81,8 @@ class NewBallReactor(paramak.Reactor):
             blanket_radial_thickness: float,
             blanket_rear_wall_radial_thickness: float,
             number_of_ports: int,
+            port_height: float,
+            port_width: float,
             elongation: float,
             triangularity: float,
             plasma_gap_vertical_thickness: Optional[float] = None,
@@ -102,6 +104,8 @@ class NewBallReactor(paramak.Reactor):
 
         self.method = 'trelis'
         self.number_of_ports = number_of_ports
+        self.port_height = port_height
+        self.port_width = port_width
 
         self.inner_bore_radial_thickness = inner_bore_radial_thickness
         self.inboard_tf_leg_radial_thickness = inboard_tf_leg_radial_thickness
@@ -454,21 +458,21 @@ class NewBallReactor(paramak.Reactor):
         self._port_angles = np.linspace(0, 360, self.number_of_ports)
         self._mid_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
-            height = 100,
-            width = 100,
+            height = self.port_height,
+            width = self.port_width,
             azimuth_placement_angle = self._port_angles 
             )
         self._high_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
-            height = 100,
-            width = 100,
+            height = self.port_height,
+            width = self.port_width,
             center_point = (self._vacuum_vessel_height/3,0),
             azimuth_placement_angle = self._port_angles
             )
         self._low_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
-            height = 100,
-            width = 100,
+            height = self.port_height,
+            width = self.port_width,
             center_point = (-self._vacuum_vessel_height/3,0),
             azimuth_placement_angle = self._port_angles
             )
