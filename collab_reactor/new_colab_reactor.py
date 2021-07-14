@@ -1,6 +1,7 @@
 
 import warnings
 from typing import List, Optional, Union
+import numpy as np
 
 import paramak
 from reactor_components.tf_coil_round_corners import ToroidalFieldCoilRectangleRoundCorners
@@ -40,6 +41,7 @@ class NewBallReactor(paramak.Reactor):
         divertor_to_tf_gap_vertical_thickness: the vertical thickness of the
             gap between the divertor and the TF coils.
         number_of_tf_coils: the number of tf coils
+        number_of_ports: the number of ports in the vacuum vessel
         pf_coil_radial_thicknesses: the radial
             thickness of each poloidal field coil.
         pf_coil_vertical_thicknesses: the vertical
@@ -78,6 +80,7 @@ class NewBallReactor(paramak.Reactor):
             firstwall_radial_thickness: float,
             blanket_radial_thickness: float,
             blanket_rear_wall_radial_thickness: float,
+            number_of_ports: int,
             elongation: float,
             triangularity: float,
             plasma_gap_vertical_thickness: Optional[float] = None,
@@ -98,6 +101,7 @@ class NewBallReactor(paramak.Reactor):
         super().__init__([])
 
         self.method = 'trelis'
+        self.number_of_ports = number_of_ports
 
         self.inner_bore_radial_thickness = inner_bore_radial_thickness
         self.inboard_tf_leg_radial_thickness = inboard_tf_leg_radial_thickness
@@ -144,6 +148,8 @@ class NewBallReactor(paramak.Reactor):
             + inboard_tf_leg_radial_thickness
             + center_column_shield_radial_thickness
             + inner_plasma_gap_radial_thickness
+            + vacuum_vessel_thickness
+            
         )
         outer_equatorial_point = \
             inner_equatorial_point + plasma_radial_thickness
@@ -297,7 +303,7 @@ class NewBallReactor(paramak.Reactor):
             + self.center_column_shield_radial_thickness
         )
 
-        self._divertor_start_radius = self.major_radius
+        self._divertor_start_radius = self._center_column_shield_end_radius
         self._divertor_end_radius = (
             self._divertor_start_radius +
             self.divertor_radial_thickness)
@@ -319,7 +325,7 @@ class NewBallReactor(paramak.Reactor):
         self._blanket_rear_wall_end_radius = (
             self._blanket_rear_wall_start_radius +
             self.blanket_rear_wall_radial_thickness)
-        self._vacuum_vessel_end_radius = self._blanket_rear_wall_end_radius
+        self._vacuum_vessel_end_radius = self._blanket_rear_wall_end_radius + self.vacuum_vessel_thickness
 
     def _make_vertical_build(self):
 
@@ -445,6 +451,28 @@ class NewBallReactor(paramak.Reactor):
     
     def _make_vacuum_vessel(self):
         
+        self._port_angles = np.linspace(0, 360, self.number_of_ports)
+        self._mid_ports = paramak.PortCutterRectangular(
+            distance = self._vacuum_vessel_end_radius,
+            height = 100,
+            width = 100,
+            azimuth_placement_angle = self._port_angles 
+            )
+        self._high_ports = paramak.PortCutterRectangular(
+            distance = self._vacuum_vessel_end_radius,
+            height = 100,
+            width = 100,
+            center_point = (self._vacuum_vessel_height/3,0),
+            azimuth_placement_angle = self._port_angles
+            )
+        self._low_ports = paramak.PortCutterRectangular(
+            distance = self._vacuum_vessel_end_radius,
+            height = 100,
+            width = 100,
+            center_point = (-self._vacuum_vessel_height/3,0),
+            azimuth_placement_angle = self._port_angles
+            )
+        
         self._vacuum_vessel = RoundedVacuumVesselInnerLeg(
             radius = (self._vacuum_vessel_end_radius - self._vacuum_vessel_start_radius)/ 2,
             thickness = self.vacuum_vessel_thickness,
@@ -456,7 +484,8 @@ class NewBallReactor(paramak.Reactor):
             name="vacuum_vessel",
             material_tag="vacuum_vessel_mat",
             stl_filename="vacuum_vessel.stl",
-            color = (1,1,1)
+            color = (1,1,1),
+            cut = [self._mid_ports,self._low_ports,self._high_ports]
             
             
         )
@@ -577,4 +606,3 @@ class NewBallReactor(paramak.Reactor):
             )
             comp = [self._tf_coil]
         return comp
-    
