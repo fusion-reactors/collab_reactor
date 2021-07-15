@@ -75,7 +75,7 @@ class NewBallReactor(paramak.Reactor):
             inboard_tf_leg_radial_thickness: float,
             center_column_shield_radial_thickness: float,
             vacuum_vessel_thickness:float,
-            divertor_radial_thickness: float,
+            
             inner_plasma_gap_radial_thickness: float,
             plasma_radial_thickness: float,
             outer_plasma_gap_radial_thickness: float,
@@ -114,7 +114,7 @@ class NewBallReactor(paramak.Reactor):
         self.center_column_shield_radial_thickness = \
             center_column_shield_radial_thickness
         self.vacuum_vessel_thickness = vacuum_vessel_thickness
-        self.divertor_radial_thickness = divertor_radial_thickness
+        
         self.inner_plasma_gap_radial_thickness = \
             inner_plasma_gap_radial_thickness
         self.plasma_radial_thickness = plasma_radial_thickness
@@ -162,6 +162,7 @@ class NewBallReactor(paramak.Reactor):
         self.major_radius = \
             (outer_equatorial_point + inner_equatorial_point) / 2
         self.minor_radius = self.major_radius - inner_equatorial_point
+        self.divertor_radial_thickness = 0.75 * self.major_radius
 
         self.elongation = elongation
         self.triangularity = triangularity
@@ -457,26 +458,31 @@ class NewBallReactor(paramak.Reactor):
     
     def _make_vacuum_vessel(self):
         
-        self._port_angles = np.linspace(0, 360, self.number_of_ports)
+        self._port_angles = np.linspace(0, 360, self.number_of_ports + 1)
+        self._port_adjust = (360 / self.number_of_tf_coils)/2
+        self._adjusted_ports = [x + self._port_adjust for x in self._port_angles]
         self._mid_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
             height = self.port_height,
             width = self.port_width,
-            azimuth_placement_angle = self._port_angles 
+            extrusion_start_offset = self._vacuum_vessel_start_radius + self.vacuum_vessel_thickness,
+            azimuth_placement_angle = self._adjusted_ports
             )
         self._high_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
             height = self.port_height,
             width = self.port_width,
+            extrusion_start_offset = self._vacuum_vessel_start_radius + self.vacuum_vessel_thickness,
             center_point = (self._vacuum_vessel_height/3,0),
-            azimuth_placement_angle = self._port_angles
+            azimuth_placement_angle = self._adjusted_ports
             )
         self._low_ports = paramak.PortCutterRectangular(
             distance = self._vacuum_vessel_end_radius,
             height = self.port_height,
             width = self.port_width,
+            extrusion_start_offset = self._vacuum_vessel_start_radius + self.vacuum_vessel_thickness,
             center_point = (-self._vacuum_vessel_height/3,0),
-            azimuth_placement_angle = self._port_angles
+            azimuth_placement_angle = self._adjusted_ports
             )
         
         self._vacuum_vessel = RoundedVacuumVesselInnerLeg(
@@ -612,3 +618,4 @@ class NewBallReactor(paramak.Reactor):
             )
             comp = [self._tf_coil]
         return comp
+    
